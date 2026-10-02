@@ -61,3 +61,18 @@ func TestPublisherRecordsAmbiguousAcceptance(t *testing.T) {
 		t.Fatalf("second attempt = %d, want %d", got, want)
 	}
 }
+
+func TestAssertionsAcceptMatchingDeliveryLog(t *testing.T) {
+	errTemporary := errors.New("temporary network error")
+	kit := New(t, ReturnErrorOnce(errTemporary))
+	event := Event{ID: "evt_1", Type: "order.created"}
+
+	_ = kit.Publisher().Publish(context.Background(), event)
+	if err := kit.Publisher().Publish(context.Background(), event); err != nil {
+		t.Fatalf("second Publish() error = %v", err)
+	}
+
+	kit.AssertAttempts("order.created", 2)
+	kit.AssertAccepted("evt_1", 1)
+	kit.AssertDeliveryOrder("order.created", "order.created")
+}

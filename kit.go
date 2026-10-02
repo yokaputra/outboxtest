@@ -17,6 +17,7 @@ type Delivery struct {
 
 // Kit controls and observes a Publisher used by an application's test.
 type Kit struct {
+	t         testing.TB
 	publisher *fakePublisher
 }
 
@@ -35,7 +36,7 @@ func New(t testing.TB, options ...Option) *Kit {
 		option(publisher)
 	}
 
-	return &Kit{publisher: publisher}
+	return &Kit{t: t, publisher: publisher}
 }
 
 // Publisher returns the fake delivery boundary supplied to the application
