@@ -1,0 +1,12 @@
+# Go build and test output
+*.exe
+*.test
+*.out
+
+# Coverage and profiling output
+coverage.out
+*.coverprofile
+*.prof
+
+# Local-only workspace files.
+.local/
