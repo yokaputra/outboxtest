@@ -57,9 +57,8 @@ type fakePublisher struct {
 	faults     []deliveryOutcome
 }
 
-func (p *fakePublisher) Publish(_ context.Context, event Event) error {
+func (p *fakePublisher) Publish(ctx context.Context, event Event) error {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	attempt := p.attempts[event.ID] + 1
 	p.attempts[event.ID] = attempt
@@ -70,12 +69,21 @@ func (p *fakePublisher) Publish(_ context.Context, event Event) error {
 		p.faults = p.faults[1:]
 	}
 
+	deliveryIndex := len(p.deliveries)
 	p.deliveries = append(p.deliveries, Delivery{
 		Sequence: len(p.deliveries) + 1,
 		Attempt:  attempt,
 		Event:    event.Clone(),
-		Accepted: outcome.accepted,
 	})
+	p.mu.Unlock()
+
+	if err := outcome.wait(ctx); err != nil {
+		return err
+	}
+
+	p.mu.Lock()
+	p.deliveries[deliveryIndex].Accepted = outcome.accepted
+	p.mu.Unlock()
 
 	return outcome.err
 }
